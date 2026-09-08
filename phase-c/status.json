@@ -9,21 +9,22 @@
   "latestObservation": {
     "schemaVersion": 1,
     "baseline": "phase-c-tiingo-v1",
-    "observedAt": "2026-09-08T22:32:50.237Z",
+    "observedAt": "2026-09-08T22:43:44.225Z",
     "marketDataDate": "2026-09-04",
     "classification": "BLOCKED_NOT_COUNTABLE",
     "countable": false,
     "shadowStatus": "CHECK_DATA",
     "diagnosticCodes": [
-      "SOURCE_STALE"
+      "UPSTREAM_STATE_NOT_READY",
+      "EXECUTION_DATE_MISMATCH"
     ],
     "inputHashes": {
-      "signal": "a323c2ce02edfc25cf633195f59658a53048186f1425ac0236f1e355923159bd",
-      "status": "a5b9f4d82041aa2265073143ef6e04decde5300ef1d3b1c645d4c49cd0af3a61",
+      "signal": "f5b0a97f7497dea1231dfb550ce8192c9632cb6b902485dec877edf7ae6acfbe",
+      "status": "b8816bbf65676c10fec449f2f835b5fdf7ce886bd7df6cb21f26be6f7e4172ca",
       "tiingo": "80b769395de62e85a7961920f9f269f9dced9d24ead09e3877ac3f12e4ade025"
     },
-    "artifactHash": "bec38d0eb4995226ebc27256972b4f1fe8d1be7f4fd76db19047f6c7c5feca31",
-    "canonicalDecisionHash": "c2e9126aaffbd724ad4b87cc6aafefdea4c09b050c46035b024af2e28b960d14",
+    "artifactHash": "3fd0bfc00276fd5dea9957ce0e14dd0d1168b21ede7a76f89a8dc2c0a82f3d8c",
+    "canonicalDecisionHash": "2f87b39f99f94e3119863d0ccd5142c6bb56d2eda8872b456c1c25518dc76dfa",
     "replayVerified": true,
     "authorityInvariantPass": true,
     "authority": "NONE_SHADOW_ONLY",
@@ -44,7 +45,7 @@
         "signalDate": "2026-09-04",
         "target": 1,
         "previousTarget": 1,
-        "artifactHash": "a323c2ce02edfc25cf633195f59658a53048186f1425ac0236f1e355923159bd"
+        "artifactHash": "f5b0a97f7497dea1231dfb550ce8192c9632cb6b902485dec877edf7ae6acfbe"
       },
       "target": null,
       "execution": {
@@ -61,7 +62,8 @@
       },
       "diagnostics": {
         "issues": [
-          "SOURCE_STALE"
+          "UPSTREAM_STATE_NOT_READY",
+          "EXECUTION_DATE_MISMATCH"
         ],
         "gldDate": "2026-09-04",
         "mapping": "TQQQ=VS13 target; GLD=CASH=(1-target)/2",
@@ -70,7 +72,7 @@
       "status": "CHECK_DATA"
     }
   },
-  "updatedAt": "2026-09-08T22:32:50.237Z",
+  "updatedAt": "2026-09-08T22:43:44.225Z",
   "rawTiingoDataPersisted": false,
   "productionAuthority": false,
   "brokerOrderAllowed": false
