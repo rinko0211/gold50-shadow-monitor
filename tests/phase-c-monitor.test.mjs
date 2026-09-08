@@ -12,9 +12,10 @@ const signal = {
   platformMode: "RESEARCH",
   assetTicker: "TQQQ",
   strategyVersion: "VS13-v1.0",
+  state: "latest",
   signal: { date: "2026-09-08", target: 0.75, previousTarget: 0.75, executionDate: "2026-09-09" }
 };
-const status = { generatedAt: signal.generatedAt, actionStatus: "success", marketDataDate: "2026-09-08", signalDate: "2026-09-08", errors: [] };
+const status = { generatedAt: signal.generatedAt, actionStatus: "success", marketDataDate: "2026-09-08", signalDate: "2026-09-08", state: "latest", errors: [] };
 const tiingo = [
   { date: "2026-09-04T00:00:00.000Z", open: 405, high: 409, low: 404, close: 408, splitFactor: 1 },
   { date: "2026-09-08T00:00:00.000Z", open: 410, high: 414, low: 409, close: 413, splitFactor: 1 }
@@ -55,6 +56,24 @@ test("valid same-session run counts once", async () => {
   const second = await runPhaseC({ now: NOW, token: "secret", observationsPath, statusPath, fetcher: fakeFetch });
   assert.equal(second.observation.classification, "PASS_DUPLICATE_SESSION_NOT_COUNTED");
   assert.equal(second.status.counter, "C1/10");
+});
+
+test("provider-pending TQQQ state blocks even when timestamps are fresh", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "gold50-phasec-pending-"));
+  const pendingSignal = { ...structuredClone(signal), dataDate: "2026-09-04", state: "provider_pending" };
+  pendingSignal.signal.date = "2026-09-04";
+  pendingSignal.signal.executionDate = "2026-09-08";
+  const pendingStatus = { ...status, marketDataDate: "2026-09-04", signalDate: "2026-09-04", state: "provider_pending" };
+  const fetcher = (url) => {
+    if (url.includes("signal.json")) return Promise.resolve(JSON.stringify(pendingSignal));
+    if (url.includes("status.json")) return Promise.resolve(JSON.stringify(pendingStatus));
+    if (url.includes("api.tiingo.com")) return Promise.resolve(JSON.stringify([tiingo[0]]));
+    throw new Error("UNEXPECTED_URL");
+  };
+  const result = await runPhaseC({ now: NOW, token: "secret", observationsPath: join(dir, "obs.jsonl"), statusPath: join(dir, "status.json"), fetcher });
+  assert.equal(result.observation.classification, "BLOCKED_NOT_COUNTABLE");
+  assert.ok(result.observation.diagnosticCodes.includes("UPSTREAM_STATE_NOT_READY"));
+  assert.equal(result.status.counter, "C0/10");
 });
 
 test("missing token blocks without advancing", async () => {
