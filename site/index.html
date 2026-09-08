@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d10" />
+  <title>Gold50 Phase C Monitor</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark;background:#0b0d10;color:#f4f5f7}
+    *{box-sizing:border-box} body{margin:0;background:#0b0d10} main{max-width:680px;margin:0 auto;padding:22px 16px 48px}
+    .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}.title{font-size:21px;font-weight:750}.sub{font-size:12px;color:#939aa5;margin-top:5px}.badge{font-size:11px;font-weight:700;border:1px solid #333a44;border-radius:999px;padding:6px 9px;white-space:nowrap;color:#c9ced6}
+    .hero{border:1px solid #252b33;border-radius:18px;padding:20px;background:#12151a;margin-bottom:12px}.counter{font-size:43px;font-weight:800;letter-spacing:-2px}.state{margin-top:5px;font-size:14px;font-weight:700}.progress{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:16px}.pip{height:7px;border-radius:8px;background:#292f37}.pip.on{background:#d9dde3}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.card{border:1px solid #252b33;border-radius:15px;padding:15px;background:#12151a}.label{font-size:11px;color:#8f97a2;text-transform:uppercase;letter-spacing:.6px}.value{font-size:18px;font-weight:750;margin-top:6px}.small{font-size:12px;color:#a7adb6;margin-top:5px;line-height:1.45}
+    .wide{margin-bottom:12px}.diag{margin-top:8px;padding:10px 12px;background:#0d1014;border-radius:11px;font-size:13px;line-height:1.55;color:#c7cbd1}.ok{color:#b8e0bf}.warn{color:#f0cf8a}.bad{color:#efaaa7}.muted{color:#8f97a2}.alloc{display:flex;gap:8px;margin-top:10px}.alloc span{flex:1;background:#0d1014;border-radius:10px;padding:9px 7px;text-align:center;font-size:12px}.alloc b{display:block;font-size:17px;margin-top:3px}
+    footer{margin-top:18px;color:#757d88;font-size:11px;line-height:1.6;text-align:center}button{appearance:none;border:1px solid #303740;background:#15191f;color:#d9dde3;border-radius:10px;padding:7px 10px;font-size:12px}
+    @media(max-width:420px){.counter{font-size:38px}.grid{grid-template-columns:1fr 1fr}.value{font-size:16px}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <div><div class="title">Gold50 Phase C</div><div class="sub">TQQQとは分離したShadow Monitor</div></div>
+    <div class="badge">SHADOW ONLY</div>
+  </div>
+
+  <section class="hero">
+    <div class="label">Soak progress</div>
+    <div id="counter" class="counter">--/10</div>
+    <div id="classification" class="state muted">読み込み中…</div>
+    <div id="progress" class="progress"></div>
+  </section>
+
+  <div class="grid">
+    <section class="card"><div class="label">TQQQ source</div><div id="tqqq" class="value">—</div><div id="tqqqSub" class="small">—</div></section>
+    <section class="card"><div class="label">GLD / Tiingo</div><div id="gld" class="value">—</div><div id="gldSub" class="small">—</div></section>
+  </div>
+
+  <section class="card wide">
+    <div class="label">Latest observation</div>
+    <div id="marketDate" class="value">—</div>
+    <div id="updated" class="small">—</div>
+    <div id="diag" class="diag">—</div>
+  </section>
+
+  <section id="allocationCard" class="card wide" hidden>
+    <div class="label">Shadow allocation</div>
+    <div class="alloc">
+      <span>TQQQ<b id="aTqqq">—</b></span><span>GLD<b id="aGld">—</b></span><span>CASH<b id="aCash">—</b></span>
+    </div>
+  </section>
+
+  <section class="card wide">
+    <div class="label">Authority</div>
+    <div class="value">売買権限なし</div>
+    <div class="small">NONE_SHADOW_ONLY · brokerOrderAllowed=false · Productionへ自動昇格しません</div>
+  </section>
+
+  <div style="text-align:center"><button id="refresh">今すぐ更新</button></div>
+  <footer>60秒ごとに自動更新。価格データそのものは表示・保存しません。<br><span id="loadedAt"></span></footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const classText=(el,text,cls)=>{el.textContent=text;el.className=el.className.replace(/\b(ok|warn|bad|muted)\b/g,'').trim()+' '+cls};
+const diagJa={
+  UPSTREAM_STATE_NOT_READY:'TQQQ上流がまだReadyではありません',
+  SOURCE_STALE:'TQQQソースが最新営業日に追いついていません',
+  EXECUTION_DATE_MISMATCH:'TQQQの実行日が現在の営業日契約と一致していません',
+  GLD_STALE:'GLDがTQQQと同じ営業日に追いついていません',
+  GLD_MISSING:'GLDデータを取得できません',
+  TIINGO_API_TOKEN_MISSING:'Tiingo API設定がありません',
+  SESSION_NOT_COMPLETE:'NYSEセッションがまだ終了していません',
+  SOURCE_GENERATED_BEFORE_SESSION_CLOSE:'TQQQ判定が市場終了前のため無効です',
+  STATUS_GENERATED_BEFORE_SESSION_CLOSE:'TQQQ statusが市場終了前のため無効です',
+  GLD_RETRIEVED_BEFORE_SESSION_CLOSE:'GLD取得が市場終了前のため無効です'
+};
+const classJa={PASS_COUNTABLE:'PASS — 1営業日カウント',PASS_DUPLICATE_SESSION_NOT_COUNTED:'PASS — 既にカウント済み',BLOCKED_NOT_COUNTABLE:'BLOCKED — カウントなし'};
+function percent(v){return Number.isFinite(v)?Math.round(v*100)+'%':'—'}
+function render(s){
+  const o=s.latestObservation||{}; const r=o.result||{}; const f=r.freshness||{}; const issues=o.diagnosticCodes||[];
+  $('counter').textContent=s.counter||'C0/10';
+  const c=o.classification||'NO OBSERVATION';
+  classText($('classification'),classJa[c]||c,c==='PASS_COUNTABLE'?'ok':c.startsWith('PASS_')?'warn':'bad');
+  $('progress').innerHTML=''; const n=s.successfulSessions||0; for(let i=0;i<10;i++){const x=document.createElement('div');x.className='pip'+(i<n?' on':'');$('progress').appendChild(x)}
+  const tOk=f.sourceSignalValid===true; classText($('tqqq'),tOk?'READY':'NOT READY',tOk?'ok':'warn');
+  $('tqqqSub').textContent=`Signal: ${r.sourceSignal?.signalDate||o.marketDataDate||'—'} · Target: ${percent(r.sourceSignal?.target)}`;
+  const gOk=f.gldValid===true; classText($('gld'),gOk?'READY':'NOT READY',gOk?'ok':'warn');
+  $('gldSub').textContent=`Tiingo EOD · GLD date: ${r.diagnostics?.gldDate||'—'}`;
+  $('marketDate').textContent=o.marketDataDate||'—';
+  $('updated').textContent=o.observedAt?`観測: ${new Date(o.observedAt).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})}`:'観測記録なし';
+  $('diag').innerHTML=issues.length?issues.map(x=>`${diagJa[x]||x}<br><span class="muted">${x}</span>`).join('<br>'):'異常コードなし';
+  const a=r.target; $('allocationCard').hidden=!a; if(a){$('aTqqq').textContent=percent(a.TQQQ);$('aGld').textContent=percent(a.GLD);$('aCash').textContent=percent(a.CASH)}
+  $('loadedAt').textContent=`画面更新: ${new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})}`;
+}
+async function load(){try{const res=await fetch(`status.json?t=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw Error(`HTTP ${res.status}`);render(await res.json())}catch(e){classText($('classification'),'UI DATA ERROR','bad');$('diag').textContent=String(e)}}
+$('refresh').addEventListener('click',load); load(); setInterval(load,60000);
+</script>
+</body>
+</html>
