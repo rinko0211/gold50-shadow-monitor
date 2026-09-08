@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "baseline": "phase-c-tiingo-v1",
+  "targetSessions": 10,
+  "successfulSessions": 0,
+  "counter": "C0/10",
+  "successfulDates": [],
+  "phaseCState": "ACTIVE",
+  "latestObservation": null,
+  "updatedAt": null,
+  "rawTiingoDataPersisted": false,
+  "productionAuthority": false,
+  "brokerOrderAllowed": false
+}
