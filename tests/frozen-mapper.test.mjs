@@ -9,9 +9,10 @@ function fixture() {
     platformMode: "RESEARCH",
     assetTicker: "TQQQ",
     strategyVersion: "VS13-v1.0",
+    state: "latest",
     signal: { date: "2026-09-08", target: 0.75, previousTarget: 0.5, executionDate: "2026-09-09" }
   };
-  const status = { generatedAt: signal.generatedAt, actionStatus: "success", marketDataDate: signal.dataDate, signalDate: signal.dataDate, errors: [] };
+  const status = { generatedAt: signal.generatedAt, actionStatus: "success", marketDataDate: signal.dataDate, signalDate: signal.dataDate, state: "latest", errors: [] };
   const gold = { ticker: "GLD", retrievedAt: "2026-09-08T22:40:00.000Z", bars: [
     { date: "2026-09-04", open: 400, high: 405, low: 398, close: 404 },
     { date: "2026-09-08", open: 405, high: 410, low: 404, close: 409 }
@@ -35,6 +36,16 @@ test("valid mapper output is shadow-only and non executable", () => {
   assert.equal(artifact.diagnostics.authority, "NONE_SHADOW_ONLY");
   assert.equal(artifact.execution.brokerOrderAllowed, false);
   assert.equal(artifact.status, "SHADOW_ONLY");
+});
+
+test("provider-pending upstream never becomes a countable shadow decision", () => {
+  const input = fixture();
+  input.signal.state = "provider_pending";
+  input.status.state = "provider_pending";
+  input.sourceBytes = JSON.stringify(input.signal);
+  const artifact = buildShadowArtifact(input);
+  assert.equal(artifact.status, "CHECK_DATA");
+  assert.ok(artifact.diagnostics.issues.includes("UPSTREAM_STATE_NOT_READY"));
 });
 
 test("stale GLD fails closed", () => {
