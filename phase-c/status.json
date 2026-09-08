@@ -9,7 +9,7 @@
   "latestObservation": {
     "schemaVersion": 1,
     "baseline": "phase-c-tiingo-v1",
-    "observedAt": "2026-09-08T22:43:44.225Z",
+    "observedAt": "2026-09-08T22:45:13.129Z",
     "marketDataDate": "2026-09-04",
     "classification": "BLOCKED_NOT_COUNTABLE",
     "countable": false,
@@ -23,7 +23,7 @@
       "status": "b8816bbf65676c10fec449f2f835b5fdf7ce886bd7df6cb21f26be6f7e4172ca",
       "tiingo": "80b769395de62e85a7961920f9f269f9dced9d24ead09e3877ac3f12e4ade025"
     },
-    "artifactHash": "3fd0bfc00276fd5dea9957ce0e14dd0d1168b21ede7a76f89a8dc2c0a82f3d8c",
+    "artifactHash": "ffd425da605525cd3ddd85c2831b3970cf5bcf4a60e7ee18d00d6137aec1189f",
     "canonicalDecisionHash": "2f87b39f99f94e3119863d0ccd5142c6bb56d2eda8872b456c1c25518dc76dfa",
     "replayVerified": true,
     "authorityInvariantPass": true,
@@ -72,7 +72,7 @@
       "status": "CHECK_DATA"
     }
   },
-  "updatedAt": "2026-09-08T22:43:44.225Z",
+  "updatedAt": "2026-09-08T22:45:13.129Z",
   "rawTiingoDataPersisted": false,
   "productionAuthority": false,
   "brokerOrderAllowed": false
