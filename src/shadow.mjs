@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { completedNyseSessionsSince, executionWindow, isNyseSession, nextNyseSession } from "./calendar.mjs";
+import { completedNyseSessionsSince, executionWindow, isCompletedNyseSession, isNyseSession, nextNyseSession } from "./calendar.mjs";
 
 export const STRATEGY_ID = "TQQQ-Gold50-Research-v0.1";
 export const STRATEGY_VERSION = "gold-overlay-shadow-0.1.0";
@@ -66,6 +66,13 @@ function validateGold(gold, signalDate, now, issues) {
   result.close = latest?.close ?? null;
   if (latest?.date < signalDate) issues.push("GLD_STALE");
   if (latest?.date > signalDate) issues.push("GLD_FUTURE_BAR");
+  if (isNyseSession(signalDate) && Number.isFinite(retrieved)) {
+    try {
+      if (!isCompletedNyseSession(signalDate, gold.retrievedAt)) issues.push("GLD_RETRIEVED_BEFORE_SESSION_CLOSE");
+    } catch {
+      issues.push("GLD_SESSION_CLOSE_UNVERIFIED");
+    }
+  }
   if (![latest?.open, latest?.high, latest?.low, latest?.close].every(finitePositive)) {
     issues.push("GLD_PRICE_INVALID");
   }
@@ -119,6 +126,15 @@ function validateSource({ signal, status, sourceBytes, now }) {
   else {
     if (generatedAt > nowTime || statusGeneratedAt > nowTime) issues.push("FUTURE_GENERATION");
     if (Math.abs(generatedAt - statusGeneratedAt) > 60_000) issues.push("CROSS_GENERATION_MISMATCH");
+  }
+  if (isNyseSession(signal?.dataDate)) {
+    try {
+      if (!isCompletedNyseSession(signal.dataDate, signal?.generatedAt)) issues.push("SOURCE_GENERATED_BEFORE_SESSION_CLOSE");
+      if (!isCompletedNyseSession(signal.dataDate, status?.generatedAt)) issues.push("STATUS_GENERATED_BEFORE_SESSION_CLOSE");
+      if (!isCompletedNyseSession(signal.dataDate, now)) issues.push("SESSION_NOT_COMPLETE");
+    } catch {
+      issues.push("SESSION_CLOSE_UNVERIFIED");
+    }
   }
   if (status?.actionStatus !== "success" || (status?.errors?.length ?? 0) > 0) issues.push("UPSTREAM_STATUS_FAILED");
   if (status?.signalDate !== signal?.dataDate || status?.marketDataDate !== signal?.dataDate) {
