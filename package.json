@@ -1,0 +1,11 @@
+{
+  "name": "gold50-shadow-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "phasec:run": "node src/phase-c-monitor.mjs"
+  }
+}
