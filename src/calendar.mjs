@@ -1,6 +1,20 @@
 const NY_ZONE = "America/New_York";
 const OPEN_MINUTES = 9 * 60 + 30;
+const REGULAR_CLOSE_MINUTES = 16 * 60;
+const EARLY_CLOSE_MINUTES = 13 * 60;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+// NYSE official published early-close calendar currently covered by this monitor.
+// Keep this explicit instead of inferring a holiday rule that could silently be wrong.
+const OFFICIAL_EARLY_CLOSE_DATES = new Set([
+  "2026-11-27",
+  "2026-12-24",
+  "2027-11-26",
+  "2028-07-03",
+  "2028-11-24"
+]);
+const OFFICIAL_CLOSE_CALENDAR_MIN_YEAR = 2026;
+const OFFICIAL_CLOSE_CALENDAR_MAX_YEAR = 2028;
 
 export function isValidIsoMarketDate(date) {
   if (!DATE_RE.test(date ?? "")) return false;
@@ -103,6 +117,23 @@ export function nyClock(isoTimestamp) {
   };
 }
 
+export function nyseSessionCloseMinutes(date) {
+  if (!isNyseSession(date)) throw new Error("invalid NYSE session close request");
+  const year = Number(date.slice(0, 4));
+  if (year < OFFICIAL_CLOSE_CALENDAR_MIN_YEAR || year > OFFICIAL_CLOSE_CALENDAR_MAX_YEAR) {
+    throw new Error("NYSE_CLOSE_CALENDAR_UNVERIFIED");
+  }
+  return OFFICIAL_EARLY_CLOSE_DATES.has(date) ? EARLY_CLOSE_MINUTES : REGULAR_CLOSE_MINUTES;
+}
+
+export function isCompletedNyseSession(date, timestamp) {
+  if (!isNyseSession(date)) return false;
+  const clock = nyClock(timestamp);
+  if (clock.localDate > date) return true;
+  if (clock.localDate < date) return false;
+  return clock.minutes >= nyseSessionCloseMinutes(date);
+}
+
 export function executionWindow(executionDate, now) {
   if (!isNyseSession(executionDate)) return "INVALID_SESSION";
   const clock = nyClock(now);
@@ -120,8 +151,9 @@ export function completedNyseSessionsSince(generatedAt, now) {
   while (cursor.toISOString().slice(0, 10) <= end.localDate) {
     const date = cursor.toISOString().slice(0, 10);
     if (isNyseSession(date)) {
-      const afterGeneration = date > start.localDate || (date === start.localDate && start.minutes < 16 * 60);
-      const completeNow = date < end.localDate || (date === end.localDate && end.minutes >= 16 * 60);
+      const closeMinutes = nyseSessionCloseMinutes(date);
+      const afterGeneration = date > start.localDate || (date === start.localDate && start.minutes < closeMinutes);
+      const completeNow = date < end.localDate || (date === end.localDate && end.minutes >= closeMinutes);
       if (afterGeneration && completeNow) completed += 1;
     }
     cursor.setUTCDate(cursor.getUTCDate() + 1);
