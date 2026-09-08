@@ -5,6 +5,7 @@ export const STRATEGY_ID = "TQQQ-Gold50-Research-v0.1";
 export const STRATEGY_VERSION = "gold-overlay-shadow-0.1.0";
 export const SOURCE_VERSION = "VS13-v1.0";
 const TARGET_TOLERANCE = 1e-12;
+const READY_SOURCE_STATES = new Set(["latest", "market_closed"]);
 
 export const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const finiteUnit = (value) => Number.isFinite(value) && value >= 0 && value <= 1;
@@ -98,6 +99,9 @@ function validateSource({ signal, status, sourceBytes, now }) {
   if (signal?.strategyVersion !== SOURCE_VERSION) issues.push("SOURCE_VERSION_MISMATCH");
   if (signal?.assetTicker !== "TQQQ") issues.push("SOURCE_ASSET_MISMATCH");
   if (signal?.platformMode !== "RESEARCH") issues.push("SOURCE_MODE_MISMATCH");
+  if (!READY_SOURCE_STATES.has(signal?.state) || !READY_SOURCE_STATES.has(status?.state)) {
+    issues.push("UPSTREAM_STATE_NOT_READY");
+  }
   if (typeof sourceBytes === "string") {
     try {
       if (JSON.stringify(JSON.parse(sourceBytes)) !== JSON.stringify(signal)) issues.push("SOURCE_BYTES_MISMATCH");
