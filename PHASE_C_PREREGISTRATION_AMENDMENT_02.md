@@ -32,18 +32,29 @@ Tiingo individual plans are internal-use-only. Therefore raw Tiingo OHLC and raw
 
 This replaces the earlier requirement to persist raw GLD input files. The change occurs before any Phase C session is counted, so the baseline is C0/10.
 
+## Pre-C1 upstream readiness hardening
+
+The first live integration check exposed a readiness distinction before any countable Phase C session existed: the TQQQ Daily workflow may successfully regenerate fail-closed public artifacts while its data provider is still pending. In that case `generatedAt` is current but `dataDate` can remain on the previous session and `state=provider_pending` explicitly says the signal must not be used.
+
+Accordingly, Phase C now requires both public TQQQ `signal.json` and `status.json` to be in an explicitly ready state before countability:
+
+- accepted: `latest`, `market_closed`
+- rejected: `provider_pending`, `market_pending`, `not_updated`, `failed`, missing/unknown state
+
+A rejected state emits `UPSTREAM_STATE_NOT_READY` and is `BLOCKED_NOT_COUNTABLE`. This is a validation-contract hardening only; the frozen Gold50 strategy formula is unchanged. The defect and remediation are preserved in `PHASE_C_PRE_C1_FINDING_01.md`. Because it was found and fixed while the counter was still C0/10, no counted evidence was rewritten or invalidated and the existing baseline remains valid.
+
 ## Countability
 
 A session counts only when:
 
-1. TQQQ signal/status are coherent and current.
+1. TQQQ signal/status are coherent, current, and in an explicitly ready upstream state.
 2. Tiingo returns a valid GLD bar for the same completed NYSE session.
 3. The frozen mapper returns `SHADOW_ONLY` or normal `NO_ACTION` without integrity issues.
 4. Deterministic in-run replay matches the canonical decision hash.
 5. Authority invariants pass.
 6. The session date has not already counted under the current baseline.
 
-`CHECK_DATA`, provider failure, missing secret, stale/mismatched dates, malformed data, or duplicate already-counted sessions do not advance the counter. BLOCKED observations do not reset prior successful sessions. Any strategy/formula/schema/contract change after the first countable session requires a new baseline and C0 reset.
+`CHECK_DATA`, provider failure, missing secret, upstream non-ready state, stale/mismatched dates, malformed data, or duplicate already-counted sessions do not advance the counter. BLOCKED observations do not reset prior successful sessions. Any strategy/formula/schema/contract change after the first countable session requires a new baseline and C0 reset.
 
 ## Scheduling and stop gate
 
