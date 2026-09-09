@@ -56,9 +56,10 @@
   </section>
 
   <div style="text-align:center"><button id="refresh">今すぐ更新</button></div>
-  <footer>60秒ごとに自動更新。価格データそのものは表示・保存しません。<br><span id="loadedAt"></span></footer>
+  <footer>60秒ごとにリポジトリの最新Phase C状態を直接取得。価格データそのものは表示・保存しません。<br><span id="loadedAt"></span></footer>
 </main>
 <script>
+const LIVE_STATUS='https://raw.githubusercontent.com/rinko0211/gold50-shadow-monitor/main/phase-c/status.json';
 const $=id=>document.getElementById(id);
 const classText=(el,text,cls)=>{el.textContent=text;el.className=el.className.replace(/\b(ok|warn|bad|muted)\b/g,'').trim()+' '+cls};
 const diagJa={
@@ -91,7 +92,7 @@ function render(s){
   const a=r.target; $('allocationCard').hidden=!a; if(a){$('aTqqq').textContent=percent(a.TQQQ);$('aGld').textContent=percent(a.GLD);$('aCash').textContent=percent(a.CASH)}
   $('loadedAt').textContent=`画面更新: ${new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})}`;
 }
-async function load(){try{const res=await fetch(`status.json?t=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw Error(`HTTP ${res.status}`);render(await res.json())}catch(e){classText($('classification'),'UI DATA ERROR','bad');$('diag').textContent=String(e)}}
+async function load(){try{const res=await fetch(`${LIVE_STATUS}?t=${Date.now()}`,{cache:'no-store'});if(!res.ok)throw Error(`HTTP ${res.status}`);render(await res.json())}catch(e){classText($('classification'),'UI DATA ERROR','bad');$('diag').textContent=String(e)}}
 $('refresh').addEventListener('click',load); load(); setInterval(load,60000);
 </script>
 </body>
