@@ -9,7 +9,7 @@
   "latestObservation": {
     "schemaVersion": 1,
     "baseline": "phase-c-tiingo-v1",
-    "observedAt": "2026-09-08T22:55:37.326Z",
+    "observedAt": "2026-09-09T00:38:22.316Z",
     "marketDataDate": "2026-09-04",
     "classification": "BLOCKED_NOT_COUNTABLE",
     "countable": false,
@@ -19,12 +19,12 @@
       "EXECUTION_DATE_MISMATCH"
     ],
     "inputHashes": {
-      "signal": "f5b0a97f7497dea1231dfb550ce8192c9632cb6b902485dec877edf7ae6acfbe",
-      "status": "b8816bbf65676c10fec449f2f835b5fdf7ce886bd7df6cb21f26be6f7e4172ca",
+      "signal": "05490492a0867e0e19f5269c53eb21c7d3138588c51a1f5d38d8a6e5cb231d6f",
+      "status": "98b8cc779df6cd48c3a0c8ce5f20d7fc6607582b296f8116ced166a02d069d97",
       "tiingo": "80b769395de62e85a7961920f9f269f9dced9d24ead09e3877ac3f12e4ade025"
     },
-    "artifactHash": "278dbb4f1c58bfd5974695b9f2687643b3a91d0ef4d3ece61580ae61ccecf3aa",
-    "canonicalDecisionHash": "2f87b39f99f94e3119863d0ccd5142c6bb56d2eda8872b456c1c25518dc76dfa",
+    "artifactHash": "7e31f731eef0def9e6a30de232d419530d795e41e15c59e6634c9155d2dba531",
+    "canonicalDecisionHash": "88cef5d34fd7c6edd15da85092a7840921dd7090bfdd1b2b6a98e0d473a3724b",
     "replayVerified": true,
     "authorityInvariantPass": true,
     "authority": "NONE_SHADOW_ONLY",
@@ -45,7 +45,7 @@
         "signalDate": "2026-09-04",
         "target": 1,
         "previousTarget": 1,
-        "artifactHash": "f5b0a97f7497dea1231dfb550ce8192c9632cb6b902485dec877edf7ae6acfbe"
+        "artifactHash": "05490492a0867e0e19f5269c53eb21c7d3138588c51a1f5d38d8a6e5cb231d6f"
       },
       "target": null,
       "execution": {
@@ -72,7 +72,7 @@
       "status": "CHECK_DATA"
     }
   },
-  "updatedAt": "2026-09-08T22:55:37.326Z",
+  "updatedAt": "2026-09-09T00:38:22.316Z",
   "rawTiingoDataPersisted": false,
   "productionAuthority": false,
   "brokerOrderAllowed": false
