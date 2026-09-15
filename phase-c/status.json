@@ -14,19 +14,22 @@
   "latestObservation": {
     "schemaVersion": 1,
     "baseline": "phase-c-tiingo-v1",
-    "observedAt": "2026-09-12T15:48:30.008Z",
+    "observedAt": "2026-09-15T00:55:08.723Z",
     "marketDataDate": "2026-09-11",
-    "classification": "PASS_DUPLICATE_SESSION_NOT_COUNTED",
+    "classification": "BLOCKED_NOT_COUNTABLE",
     "countable": false,
-    "shadowStatus": "SHADOW_ONLY",
-    "diagnosticCodes": [],
+    "shadowStatus": "CHECK_DATA",
+    "diagnosticCodes": [
+      "UPSTREAM_STATE_NOT_READY",
+      "EXECUTION_DATE_MISMATCH"
+    ],
     "inputHashes": {
-      "signal": "f722d1c020fb370c122ddcad3463b487a8668a5c4abe0154a5f29f4baf7ff122",
-      "status": "d30ad38255959b0ff6034cf5c40670368418fd22a8adca0ea3ed4dfe2a0a0f70",
+      "signal": "d5cd347a50452404881674df40a7428702a72e89af0c55ebd6f27c45a36bae30",
+      "status": "eee1f15ca613390d8ed3ec43923662d0f97e6b6e7d6ec5502e795d8f1ffa5f3e",
       "tiingo": "ccee504dc25d73fe5209d985bb562cdb6a28fe911d4d28883f1cbb6b5debe7d8"
     },
-    "artifactHash": "761320e5045c46b625fdbd8cad259c3be24bee28096546fe92be5c3f07b32211",
-    "canonicalDecisionHash": "f60fd59392d3673b70cd5aa1c363a325cedb691d4b6c4545c70b48d2fa029a0e",
+    "artifactHash": "fed585b21a3aaa29f78f3be583e3fddd4394ca1a34bbd4417757abb93a200e1e",
+    "canonicalDecisionHash": "5717d5e94cc9df01f0eb4a8011a63b6d1692ac724992917552db9436da914d93",
     "replayVerified": true,
     "authorityInvariantPass": true,
     "authority": "NONE_SHADOW_ONLY",
@@ -47,35 +50,34 @@
         "signalDate": "2026-09-11",
         "target": 1,
         "previousTarget": 1,
-        "artifactHash": "f722d1c020fb370c122ddcad3463b487a8668a5c4abe0154a5f29f4baf7ff122"
+        "artifactHash": "d5cd347a50452404881674df40a7428702a72e89af0c55ebd6f27c45a36bae30"
       },
-      "target": {
-        "TQQQ": 1,
-        "GLD": 0,
-        "CASH": 0
-      },
+      "target": null,
       "execution": {
         "earliestLegalDate": "2026-09-14",
-        "timing": "UPCOMING_OPEN",
+        "timing": "OPEN_PASSED",
         "actionDay": false,
         "estimatedBrokerLegs": 0,
         "brokerOrderAllowed": false
       },
       "freshness": {
-        "sourceSignalValid": true,
+        "sourceSignalValid": false,
         "gldValid": true,
         "coherentGeneration": true
       },
       "diagnostics": {
-        "issues": [],
+        "issues": [
+          "UPSTREAM_STATE_NOT_READY",
+          "EXECUTION_DATE_MISMATCH"
+        ],
         "gldDate": "2026-09-11",
         "mapping": "TQQQ=VS13 target; GLD=CASH=(1-target)/2",
         "authority": "NONE_SHADOW_ONLY"
       },
-      "status": "SHADOW_ONLY"
+      "status": "CHECK_DATA"
     }
   },
-  "updatedAt": "2026-09-12T15:48:30.008Z",
+  "updatedAt": "2026-09-15T00:55:08.723Z",
   "rawTiingoDataPersisted": false,
   "productionAuthority": false,
   "brokerOrderAllowed": false
