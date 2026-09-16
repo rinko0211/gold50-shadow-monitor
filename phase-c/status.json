@@ -2,35 +2,33 @@
   "schemaVersion": 1,
   "baseline": "phase-c-tiingo-v1",
   "targetSessions": 10,
-  "successfulSessions": 5,
-  "counter": "C5/10",
+  "successfulSessions": 6,
+  "counter": "C6/10",
   "successfulDates": [
     "2026-09-08",
     "2026-09-09",
     "2026-09-10",
     "2026-09-11",
-    "2026-09-14"
+    "2026-09-14",
+    "2026-09-15"
   ],
   "phaseCState": "ACTIVE",
   "latestObservation": {
     "schemaVersion": 1,
     "baseline": "phase-c-tiingo-v1",
-    "observedAt": "2026-09-16T05:19:08.910Z",
-    "marketDataDate": "2026-09-14",
-    "classification": "BLOCKED_NOT_COUNTABLE",
-    "countable": false,
-    "shadowStatus": "CHECK_DATA",
-    "diagnosticCodes": [
-      "UPSTREAM_STATE_NOT_READY",
-      "EXECUTION_DATE_MISMATCH"
-    ],
+    "observedAt": "2026-09-16T08:50:10.983Z",
+    "marketDataDate": "2026-09-15",
+    "classification": "PASS_COUNTABLE",
+    "countable": true,
+    "shadowStatus": "SHADOW_ONLY",
+    "diagnosticCodes": [],
     "inputHashes": {
-      "signal": "68aa02472f485c89372fe4cabf6f4581117513e02d3262eef715391a2032c6c9",
-      "status": "f19077103f47dd2c3b1aeaef39a4862735ef99c8d7551570ba9d0d4d1cd7c016",
-      "tiingo": "dcdc04b3cf93384ae0148467874eb742a5c6a4e5aee10d39e8d1656d0d30ddca"
+      "signal": "87566e9b8cc04ecb892e1781307413660dac1dc01117f8a3325f22c066fbeff2",
+      "status": "cc80f4570db6b9e9f5cc6e98ec26f7b9b94e8d7ee52d8ee6765bb9465554db82",
+      "tiingo": "67930a2d4c951ad7bb24f01426deca9e322f1480eaab5a0e393a513781fae374"
     },
-    "artifactHash": "2fe111b5b2f72590a5dde615200981dee860f10d9bf42246ad4b503cab35ce54",
-    "canonicalDecisionHash": "eb9b54e527f0e616ae8dab1676f23d0be85f58c1992b4bb2dbc056bb57b03d7e",
+    "artifactHash": "ad26870074ed43cf368af2643a3bc1eef0a1cc1a40e0a88a6e89fb09ad01c576",
+    "canonicalDecisionHash": "36fd58f9b452761202ff2886c1ec318791af51b4d623d6cc1510a982ee7634a8",
     "replayVerified": true,
     "authorityInvariantPass": true,
     "authority": "NONE_SHADOW_ONLY",
@@ -45,40 +43,41 @@
       "mode": "SHADOW_RESEARCH",
       "strategyId": "TQQQ-Gold50-Research-v0.1",
       "strategyVersion": "gold-overlay-shadow-0.1.0",
-      "marketDataDate": "2026-09-14",
+      "marketDataDate": "2026-09-15",
       "sourceSignal": {
         "strategyId": "VS13-v1.0",
-        "signalDate": "2026-09-14",
+        "signalDate": "2026-09-15",
         "target": 1,
         "previousTarget": 1,
-        "artifactHash": "68aa02472f485c89372fe4cabf6f4581117513e02d3262eef715391a2032c6c9"
+        "artifactHash": "87566e9b8cc04ecb892e1781307413660dac1dc01117f8a3325f22c066fbeff2"
       },
-      "target": null,
+      "target": {
+        "TQQQ": 1,
+        "GLD": 0,
+        "CASH": 0
+      },
       "execution": {
-        "earliestLegalDate": "2026-09-15",
-        "timing": "OPEN_PASSED",
+        "earliestLegalDate": "2026-09-16",
+        "timing": "UPCOMING_OPEN",
         "actionDay": false,
         "estimatedBrokerLegs": 0,
         "brokerOrderAllowed": false
       },
       "freshness": {
-        "sourceSignalValid": false,
+        "sourceSignalValid": true,
         "gldValid": true,
         "coherentGeneration": true
       },
       "diagnostics": {
-        "issues": [
-          "UPSTREAM_STATE_NOT_READY",
-          "EXECUTION_DATE_MISMATCH"
-        ],
-        "gldDate": "2026-09-14",
+        "issues": [],
+        "gldDate": "2026-09-15",
         "mapping": "TQQQ=VS13 target; GLD=CASH=(1-target)/2",
         "authority": "NONE_SHADOW_ONLY"
       },
-      "status": "CHECK_DATA"
+      "status": "SHADOW_ONLY"
     }
   },
-  "updatedAt": "2026-09-16T05:19:08.910Z",
+  "updatedAt": "2026-09-16T08:50:10.983Z",
   "rawTiingoDataPersisted": false,
   "productionAuthority": false,
   "brokerOrderAllowed": false
