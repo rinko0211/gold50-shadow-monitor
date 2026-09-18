@@ -18,7 +18,7 @@
   "latestObservation": {
     "schemaVersion": 1,
     "baseline": "phase-c-tiingo-v1",
-    "observedAt": "2026-09-18T11:51:52.789Z",
+    "observedAt": "2026-09-18T13:52:18.789Z",
     "marketDataDate": "2026-09-17",
     "classification": "PASS_DUPLICATE_SESSION_NOT_COUNTED",
     "countable": false,
@@ -29,8 +29,8 @@
       "status": "0a44eb272a02541dcd590dacee3b920d3f0b185622b3fa16ac31c7e1b1aaca06",
       "tiingo": "68001ddaad6a389bc4af9c43006e5837af743aed9cbacdcd8b83e04d41f42485"
     },
-    "artifactHash": "c389f1dc1450bd2593e0765118d182033e6e145e155be3b7b5d2cc7f95b6985c",
-    "canonicalDecisionHash": "1aa73eb0b2a7b0e96527965d4ecc80acc6092d25935bdef45a0ba1e5cc8de725",
+    "artifactHash": "b99f9842311f2f954a97a40ea2b7788d49e7e3161156d50daf66a56980c8d975",
+    "canonicalDecisionHash": "f449bca237397abbb8cca16f90e26f2ebd78260b472ed3d35cdbab3299aba21a",
     "replayVerified": true,
     "authorityInvariantPass": true,
     "authority": "NONE_SHADOW_ONLY",
@@ -60,7 +60,7 @@
       },
       "execution": {
         "earliestLegalDate": "2026-09-18",
-        "timing": "UPCOMING_OPEN",
+        "timing": "OPEN_PASSED",
         "actionDay": false,
         "estimatedBrokerLegs": 0,
         "brokerOrderAllowed": false
@@ -79,7 +79,7 @@
       "status": "SHADOW_ONLY"
     }
   },
-  "updatedAt": "2026-09-18T11:51:52.789Z",
+  "updatedAt": "2026-09-18T13:52:18.789Z",
   "rawTiingoDataPersisted": false,
   "productionAuthority": false,
   "brokerOrderAllowed": false
