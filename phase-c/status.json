@@ -19,10 +19,10 @@
   "latestObservation": {
     "schemaVersion": 1,
     "baseline": "phase-c-tiingo-v1",
-    "observedAt": "2026-09-19T08:16:51.522Z",
+    "observedAt": "2026-09-19T11:35:18.340Z",
     "marketDataDate": "2026-09-18",
-    "classification": "PASS_COUNTABLE",
-    "countable": true,
+    "classification": "PASS_DUPLICATE_SESSION_NOT_COUNTED",
+    "countable": false,
     "shadowStatus": "SHADOW_ONLY",
     "diagnosticCodes": [],
     "inputHashes": {
@@ -30,7 +30,7 @@
       "status": "19ddd37d80006fc9cb6867346ac349963a0f98312810cd0801e3322bf5434c18",
       "tiingo": "fbdb65b4a28db34e2b67ad1717c4a9a54a60eac6814fcc94a4b16c59adb0f9b1"
     },
-    "artifactHash": "29678cbbceeeb99ed26350de574521942004c0cec33a855a6f6f44a1b68f09b6",
+    "artifactHash": "6ac659aaeb968119b66064d991af36ad3fdafffdd276058bafd7b9e865cd7d8d",
     "canonicalDecisionHash": "35f9c667e2daf4bcffe5b73823c1c81110fd19a6d810bed1810d0286bc4f813f",
     "replayVerified": true,
     "authorityInvariantPass": true,
@@ -80,7 +80,7 @@
       "status": "SHADOW_ONLY"
     }
   },
-  "updatedAt": "2026-09-19T08:16:51.522Z",
+  "updatedAt": "2026-09-19T11:35:18.340Z",
   "rawTiingoDataPersisted": false,
   "productionAuthority": false,
   "brokerOrderAllowed": false
