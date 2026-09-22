@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "audit": "GOLD50_RATE_REGIME_REPLAY",
+  "generatedAt": "2026-09-22T16:22:43.765Z",
+  "evidenceMode": "READ_ONLY_RESEARCH_REPLAY",
+  "productionAuthority": false,
+  "brokerOrderAllowed": false,
+  "source": {
+    "tqqqRepository": "rinko0211/tqqq-signal-lab",
+    "tqqqBaselineCommit": "fa77469d85ac7f37b74500e15afc6793eca6e432",
+    "tqqqStrategyVersion": "VS13-v1.0",
+    "goldStrategyId": "TQQQ-Gold50-Research-v0.1",
+    "goldStrategyVersion": "gold-overlay-shadow-0.1.0",
+    "mapper": "TQQQ=VS13 target; GLD=CASH=(1-target)/2",
+    "execution": "t close signal -> t+1 open rebalance",
+    "transactionCostBpsPerTradedAssetWeight": 8,
+    "gldProvider": "Tiingo EOD",
+    "rawGldPersisted": false
+  },
+  "hashes": {
+    "tqqqMarketData": "cbd481735a8e8b64679f6150aff2ace4e3eb59fd7ad01a4ca98cc6eb0f19f366",
+    "phase2Reference": "f97cacc7b8c8a04e004d905fd3d537ceb877662dd352d564bf268dea24eac511",
+    "tqqqEngineSource": "72ac6d80e630de8d383e6c7ba5ec10446ec73df24efc717af3c77a1d58bc71e9",
+    "tiingoGldResponse": "351a90901b98bef15d0f00584a1d33aa7e30e7e040e9fc1654bb9409e92998b0"
+  },
+  "coverage": {
+    "sourceStart": "2016-09-21",
+    "sourceEnd": "2026-09-21",
+    "gldRows": 2513,
+    "evaluatedThrough": "2026-09-21"
+  },
+  "referenceCheck": {
+    "pass": true,
+    "rows": [
+      {
+        "year": 2022,
+        "actual": -0.18545165642803385,
+        "expected": -0.18545165642803418
+      },
+      {
+        "year": 2023,
+        "actual": 0.8530234530630698,
+        "expected": 0.853023453063078
+      },
+      {
+        "year": 2024,
+        "actual": 0.18883879170240725,
+        "expected": 0.18883879170240636
+      }
+    ]
+  },
+  "regimes": [
+    {
+      "id": "ZERO_RATE",
+      "label": "Zero-rate / pre-hike",
+      "start": "2020-03-17",
+      "end": "2022-03-16",
+      "vs13": {
+        "start": "2020-03-17",
+        "end": "2022-03-16",
+        "sessions": 505,
+        "totalReturn": 0.6733460890293448,
+        "cagr": 0.29291958590227773,
+        "maxDd": -0.3372419988611458,
+        "annualizedVolatility": 0.38956374270470323,
+        "avgTqqqWeight": 0.5524752475247525,
+        "avgGldWeight": 0,
+        "avgCashWeight": 0.44752475247524753,
+        "actionDays": 28,
+        "totalTurnover": 16
+      },
+      "gold50": {
+        "start": "2020-03-17",
+        "end": "2022-03-16",
+        "sessions": 505,
+        "totalReturn": 0.8784262206744298,
+        "cagr": 0.3697016774128563,
+        "maxDd": -0.3271110698818699,
+        "annualizedVolatility": 0.3927899614296613,
+        "avgTqqqWeight": 0.5524752475247525,
+        "avgGldWeight": 0.22376237623762377,
+        "avgCashWeight": 0.22376237623762377,
+        "actionDays": 28,
+        "totalTurnover": 24
+      }
+    },
+    {
+      "id": "RAPID_HIKES",
+      "label": "Rapid hiking cycle",
+      "start": "2022-03-17",
+      "end": "2023-07-26",
+      "vs13": {
+        "start": "2022-03-17",
+        "end": "2023-07-26",
+        "sessions": 341,
+        "totalReturn": 0.7016450823526201,
+        "cagr": 0.48119710810019267,
+        "maxDd": -0.10828025477707015,
+        "annualizedVolatility": 0.24392443663385063,
+        "avgTqqqWeight": 0.24926686217008798,
+        "avgGldWeight": 0,
+        "avgCashWeight": 0.750733137829912,
+        "actionDays": 2,
+        "totalTurnover": 1
+      },
+      "gold50": {
+        "start": "2022-03-17",
+        "end": "2023-07-26",
+        "sessions": 341,
+        "totalReturn": 0.7121561600293276,
+        "cagr": 0.48795308202030885,
+        "maxDd": -0.10828025477707037,
+        "annualizedVolatility": 0.2525449706417625,
+        "avgTqqqWeight": 0.24926686217008798,
+        "avgGldWeight": 0.375366568914956,
+        "avgCashWeight": 0.375366568914956,
+        "actionDays": 2,
+        "totalTurnover": 1.5
+      }
+    },
+    {
+      "id": "PEAK_HOLD",
+      "label": "5.25-5.50% peak hold",
+      "start": "2023-07-27",
+      "end": "2024-09-18",
+      "vs13": {
+        "start": "2023-07-27",
+        "end": "2024-09-18",
+        "sessions": 289,
+        "totalReturn": 0.09757262690380086,
+        "cagr": 0.08456775865298694,
+        "maxDd": -0.3815846420370027,
+        "annualizedVolatility": 0.41764457372837605,
+        "avgTqqqWeight": 0.7534602076124568,
+        "avgGldWeight": 0,
+        "avgCashWeight": 0.24653979238754326,
+        "actionDays": 18,
+        "totalTurnover": 12.75
+      },
+      "gold50": {
+        "start": "2023-07-27",
+        "end": "2024-09-18",
+        "sessions": 289,
+        "totalReturn": 0.0921860515838302,
+        "cagr": 0.07992500621068865,
+        "maxDd": -0.36243181330262464,
+        "annualizedVolatility": 0.4191650619250202,
+        "avgTqqqWeight": 0.7534602076124568,
+        "avgGldWeight": 0.12326989619377163,
+        "avgCashWeight": 0.12326989619377163,
+        "actionDays": 18,
+        "totalTurnover": 19.125
+      }
+    },
+    {
+      "id": "EASING_STILL_HIGH",
+      "label": "Easing but still restrictive",
+      "start": "2024-09-19",
+      "end": "2026-09-16",
+      "vs13": {
+        "start": "2024-09-19",
+        "end": "2026-09-16",
+        "sessions": 499,
+        "totalReturn": 0.3776466405087904,
+        "cagr": 0.17561739126341003,
+        "maxDd": -0.34842153414061894,
+        "annualizedVolatility": 0.40660195622758066,
+        "avgTqqqWeight": 0.7099198396793587,
+        "avgGldWeight": 0,
+        "avgCashWeight": 0.29008016032064127,
+        "actionDays": 25,
+        "totalTurnover": 15.75
+      },
+      "gold50": {
+        "start": "2024-09-19",
+        "end": "2026-09-16",
+        "sessions": 499,
+        "totalReturn": 0.6093039774373845,
+        "cagr": 0.27161107956405717,
+        "maxDd": -0.3375777128012306,
+        "annualizedVolatility": 0.41182002112508614,
+        "avgTqqqWeight": 0.7099198396793587,
+        "avgGldWeight": 0.14504008016032063,
+        "avgCashWeight": 0.14504008016032063,
+        "actionDays": 25,
+        "totalTurnover": 23.625
+      }
+    },
+    {
+      "id": "REHIKE_2026",
+      "label": "2026 re-hike observed window",
+      "start": "2026-09-17",
+      "end": "2026-09-21",
+      "vs13": {
+        "start": "2026-09-17",
+        "end": "2026-09-21",
+        "sessions": 3,
+        "totalReturn": 0.1616369792433383,
+        "cagr": 292357.69756927824,
+        "maxDd": 0,
+        "annualizedVolatility": 0.5451145145428417,
+        "avgTqqqWeight": 1,
+        "avgGldWeight": 0,
+        "avgCashWeight": 0,
+        "actionDays": 0,
+        "totalTurnover": 0
+      },
+      "gold50": {
+        "start": "2026-09-17",
+        "end": "2026-09-21",
+        "sessions": 3,
+        "totalReturn": 0.1616369792433383,
+        "cagr": 292357.69756927824,
+        "maxDd": 0,
+        "annualizedVolatility": 0.5451145145428417,
+        "avgTqqqWeight": 1,
+        "avgGldWeight": 0,
+        "avgCashWeight": 0,
+        "actionDays": 0,
+        "totalTurnover": 0
+      }
+    }
+  ],
+  "notes": [
+    "This audit does not retune VS13 or Gold50.",
+    "Only sanitized aggregate metrics and input hashes are persisted; raw Tiingo OHLC is not persisted.",
+    "The 2026 re-hike window is too short for performance inference and is retained only as an observed-current-state slice."
+  ]
+}
