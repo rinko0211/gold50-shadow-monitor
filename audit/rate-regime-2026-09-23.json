@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "audit": "GOLD50_RATE_REGIME_REPLAY",
-  "generatedAt": "2026-09-22T16:22:43.765Z",
+  "generatedAt": "2026-09-22T16:23:25.515Z",
   "evidenceMode": "READ_ONLY_RESEARCH_REPLAY",
   "productionAuthority": false,
   "brokerOrderAllowed": false,
