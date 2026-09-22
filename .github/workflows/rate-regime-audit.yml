@@ -1,0 +1,50 @@
+name: Gold50 Rate Regime Audit
+
+on:
+  push:
+    branches:
+      - 'audit/rate-regime-2026-09-23'
+    paths:
+      - 'src/rate-regime-audit.mjs'
+      - 'src/shadow.mjs'
+      - '.github/workflows/rate-regime-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gold50-rate-regime-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pinned source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Run Tiingo-backed rate-regime replay
+        env:
+          TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
+        run: node src/rate-regime-audit.mjs
+      - name: Assert sanitized evidence and zero authority
+        shell: bash
+        run: |
+          test -f audit/rate-regime-2026-09-23.json
+          ! grep -E '"(open|high|low|close)"[[:space:]]*:' audit/rate-regime-2026-09-23.json
+          node -e 'const x=require("./audit/rate-regime-2026-09-23.json"); if(x.productionAuthority!==false||x.brokerOrderAllowed!==false||x.source.rawGldPersisted!==false||x.referenceCheck.pass!==true) process.exit(1)'
+      - name: Persist sanitized audit evidence on audit branch only
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit/rate-regime-2026-09-23.json
+          git commit -m "Record Gold50 rate-regime audit evidence"
+          git push origin HEAD:audit/rate-regime-2026-09-23
