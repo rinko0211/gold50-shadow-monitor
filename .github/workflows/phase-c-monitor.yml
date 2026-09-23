@@ -1,63 +1,51 @@
-name: Gold50 Phase C Shadow Monitor
+name: Gold50 Phase C Archive Verification
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'security/archive-phasec-2026-09-23'
     paths:
       - 'src/**'
       - 'tests/**'
       - 'package.json'
+      - 'phase-c/status.json'
       - '.github/workflows/phase-c-monitor.yml'
       - 'PHASE_C_PREREGISTRATION_AMENDMENT_02.md'
   workflow_dispatch:
-  schedule:
-    - cron: '45 22 * * 1-5'
-    - cron: '45 0 * * 2-6'
-    - cron: '45 3 * * 2-6'
-    - cron: '45 6 * * 2-6'
-    - cron: '45 9 * * 2-6'
-    - cron: '45 12 * * 2-6'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: gold50-phase-c-monitor
-  cancel-in-progress: false
+  group: gold50-phase-c-archive
+  cancel-in-progress: true
 
 jobs:
-  monitor:
+  verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          persist-credentials: true
-          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
-      - name: Verify frozen mapper and Phase C adapter
+      - name: Verify frozen mapper and archive controls
         run: npm test
-      - name: Run isolated Phase C observation
-        env:
-          TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
-        run: npm run phasec:run
-      - name: Assert no raw Tiingo values are persisted
-        shell: bash
+      - name: Verify frozen Phase C completion evidence
         run: |
-          test -f phase-c/status.json
-          ! grep -R -E '"(open|high|low|close)"[[:space:]]*:' phase-c
-          ! grep -R 'gldClose' phase-c
-      - name: Persist sanitized Phase C evidence only
-        shell: bash
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add phase-c/observations.jsonl phase-c/status.json
-          if git diff --cached --quiet; then
-            echo "No Phase C evidence change"
-            exit 0
-          fi
-          git commit -m "Record Gold50 Phase C observation"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const status=JSON.parse(fs.readFileSync('phase-c/status.json','utf8'));
+          if(status.counter!=='C10/10') throw new Error('Phase C archive counter drift');
+          if(status.successfulSessions!==10||status.targetSessions!==10) throw new Error('Phase C archive session count drift');
+          if(status.phaseCState!=='COMPLETE_STOP_GATE') throw new Error('Phase C archive is not stopped');
+          if(status.productionAuthority!==false||status.brokerOrderAllowed!==false) throw new Error('Unexpected Production/broker authority');
+          if(status.rawTiingoDataPersisted!==false) throw new Error('Unexpected raw Tiingo persistence');
+          const latest=status.latestObservation;
+          if(!latest||latest.replayVerified!==true||latest.authorityInvariantPass!==true) throw new Error('Final Phase C replay/authority evidence invalid');
+          if(latest.authority!=='NONE_SHADOW_ONLY'||latest.brokerOrderAllowed!==false) throw new Error('Final Phase C authority drift');
+          console.log('Gold50 Phase C archive: C10/10 / COMPLETE_STOP_GATE / NONE_SHADOW_ONLY');
+          NODE
