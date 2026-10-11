@@ -25,6 +25,8 @@ const makeStatus=(rows,now,attempt,code)=>({
  lastAllocation:rows.at(-1)?.target??null,
  nextExpectedSession:rows.length?nextNyseSession(rows.at(-1).marketDataDate):START,
  attempt,reasonCode:code??null,evaluatedAt:now,
+ observedSegments:rows.reduce((n,r,i)=>n+(i===0||r.continuity?.kind==='UNOBSERVED_GAP'?1:0),0),
+ unobservedGapCount:rows.filter(r=>r.continuity?.kind==='UNOBSERVED_GAP').length,
  performanceCertification:'NOT_AVAILABLE_SIGNAL_TRACK_ONLY',
  mode:'SHADOW_RESEARCH',authority:'NONE_SHADOW_ONLY',
  brokerOrderAllowed:false,manualUserOrdersOnly:true,rawTiingoOhlcPersisted:false
@@ -43,8 +45,12 @@ export function validateRows(rows){
    r.execution?.brokerOrderAllowed!==false||
    Math.abs(r.target.TQQQ+r.target.GLD+r.target.CASH-1)>1e-9)
    throw Error('INVALID_FORWARD_RECORD');
-  if(i>0&&nextNyseSession(rows[i-1].marketDataDate)!==r.marketDataDate)
-   throw Error('FORWARD_LEDGER_DATE_GAP_OR_DUPLICATE');
+  const expected=i?nextNyseSession(rows[i-1].marketDataDate):START;
+  if(r.marketDataDate<expected)throw Error('FORWARD_LEDGER_DATE_GAP_OR_DUPLICATE');
+  if(r.marketDataDate>expected){
+   if(r.continuity?.kind!=='UNOBSERVED_GAP'||r.continuity.expectedDate!==expected)
+    throw Error('UNATTESTED_FORWARD_GAP');
+  }else if(r.continuity?.kind==='UNOBSERVED_GAP')throw Error('FALSE_FORWARD_GAP_MARKER');
  }
  return rows;
 }
@@ -89,8 +95,9 @@ export function decideForward({now,source,gold,rows}){
     {kind:'BLOCKED',code:'ORIGINAL_SOURCE_REVISED'};
  }
  const expected=last?nextNyseSession(last.marketDataDate):START;
- if(d!==expected)return{kind:'BLOCKED',code:d>expected?'MISSING_NYSE_SESSION_REQUIRES_REVIEW':'OUT_OF_ORDER_SESSION'};
- if(last&&source.signal?.signal?.previousTarget!==last.sourceTarget)
+ if(d<expected)return{kind:'BLOCKED',code:'OUT_OF_ORDER_SESSION'};
+ const gap=d>expected;
+ if(last&&!gap&&source.signal?.signal?.previousTarget!==last.sourceTarget)
   return{kind:'BLOCKED',code:'SIGNAL_TARGET_CONTINUITY_MISMATCH'};
  const a=buildShadowArtifact({signal:source.signal,status:source.status,gold,sourceBytes:source.signalBytes,now});
  if(a.status!=='SHADOW_ONLY'||a.diagnostics.issues.length)
@@ -107,9 +114,12 @@ export function decideForward({now,source,gold,rows}){
   sourceCommit:source.sha,signalSha256:sha256(source.signalBytes),
   statusSha256:sha256(source.statusBytes),gldDataSha256:gold.dataSha256,
   sourceTarget:source.signal.signal.target,
+  continuity:gap?{kind:'UNOBSERVED_GAP',expectedDate:expected,actualDate:d}:
+   {kind:last?'CONTIGUOUS':'INITIAL',expectedDate:expected,actualDate:d},
   target:safe.target,execution:{earliestLegalDate:safe.execution.earliestLegalDate,
-   estimatedManualOrderLegs:safe.execution.estimatedBrokerLegs,
-   actionDay:safe.execution.actionDay,brokerOrderAllowed:false},
+   estimatedManualOrderLegs:gap?null:safe.execution.estimatedBrokerLegs,
+   manualLegEstimateReliable:!gap,
+   actionDay:gap?null:safe.execution.actionDay,brokerOrderAllowed:false},
   status:'VALID_RESEARCH_SIGNAL',replayVerified:true,
   performanceStatus:'NOT_CERTIFIED_NO_PORTFOLIO_PNL_INFERRED',
   brokerOrderAllowed:false,rawTiingoOhlcPersisted:false
