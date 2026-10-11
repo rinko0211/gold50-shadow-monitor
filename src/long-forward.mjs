@@ -5,7 +5,7 @@ import {dirname,resolve} from 'node:path';
 import {buildShadowArtifact,sha256,STRATEGY_ID,STRATEGY_VERSION} from './shadow.mjs';
 import {sanitizeArtifact,tiingoBarsFromResponse} from './phase-c-monitor.mjs';
 import {canonicalDecision} from './audit.mjs';
-import {isNyseSession,nextNyseSession} from './calendar.mjs';
+import {isNyseSession,nextNyseSession,completedNyseSessionsSince} from './calendar.mjs';
 
 export const START='2026-10-12';
 export const BASELINE='gold50-prospective-forward-v1-20261012';
@@ -76,6 +76,8 @@ export function decideForward({now,source,gold,rows}){
  if(d<START)return{kind:'WAIT',code:'BEFORE_PROSPECTIVE_START'};
  const last=rows.at(-1);
  if(last?.marketDataDate===d){
+  if(completedNyseSessionsSince(source.signal.generatedAt,now)>0)
+   return{kind:'BLOCKED',code:'UPSTREAM_SIGNAL_STALE'};
   return source.signalBytes&&source.statusBytes&&
    last.signalSha256===sha256(source.signalBytes)&&
    last.statusSha256===sha256(source.statusBytes)?
@@ -136,9 +138,13 @@ export async function runLongForward({
   await writeFile(rowsPath,JSON.stringify(d.record)+'\n',{flag:'a',encoding:'utf8'});
   rows.push(d.record);
  }
- const st=makeStatus(rows,now,d.kind,d.code);
+ let st=makeStatus(rows,now,d.kind,d.code);
  await mkdir(dirname(statusPath),{recursive:true});
- await writeFile(statusPath,JSON.stringify(st,null,2)+'\n','utf8');
+ let prior=null;try{prior=JSON.parse(await readFile(statusPath,'utf8'))}catch{}
+ const same=prior?.state===st.state&&prior?.reasonCode===st.reasonCode&&
+  prior?.validObservations===st.validObservations&&prior?.lastRecordedSession===st.lastRecordedSession;
+ if(same&&d.kind!=='APPEND')st=prior;
+ else await writeFile(statusPath,JSON.stringify(st,null,2)+'\n','utf8');
  return{decision:d.kind,reason:d.code??null,status:st};
 }
 if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
