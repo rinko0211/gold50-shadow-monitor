@@ -13,7 +13,9 @@ const REF_URL='https://api.github.com/repos/rinko0211/tqqq-signal-lab/git/ref/he
 const RAW='https://raw.githubusercontent.com/rinko0211/tqqq-signal-lab/';
 const GLD='https://api.tiingo.com/tiingo/daily/GLD/prices';
 const SHA40=/^[0-9a-f]{40}$/;
-const isoDate=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d+'T12:00:00Z'));
+const SHA256=/^[0-9a-f]{64}$/;
+const validWeight=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1;
+const isoDate=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d+'T12:00:00Z'))&&new Date(d+'T12:00:00Z').toISOString().slice(0,10)===d;
 const before=(d,days)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10)};
 const errorCode=e=>e instanceof SyntaxError?'INVALID_UPSTREAM_JSON':'SOURCE_OR_PROVIDER_UNAVAILABLE';
 const makeStatus=(rows,now,attempt,code)=>({
@@ -34,8 +36,10 @@ export function validateRows(rows){
   if(r?.baseline!==BASELINE||r.strategyId!==STRATEGY_ID||
    r.strategyVersion!==STRATEGY_VERSION||!isoDate(r.marketDataDate)||
    !isNyseSession(r.marketDataDate)||r.marketDataDate<START||
-   !SHA40.test(r.sourceCommit)||r.brokerOrderAllowed!==false||
+   !SHA40.test(r.sourceCommit)||!SHA256.test(r.signalSha256)||!SHA256.test(r.statusSha256)||
+   !SHA256.test(r.gldDataSha256)||r.brokerOrderAllowed!==false||
    r.mode!=='SHADOW_RESEARCH'||r.target==null||
+   !['TQQQ','GLD','CASH'].every(k=>validWeight(r.target[k]))||
    r.execution?.brokerOrderAllowed!==false||
    Math.abs(r.target.TQQQ+r.target.GLD+r.target.CASH-1)>1e-9)
    throw Error('INVALID_FORWARD_RECORD');
