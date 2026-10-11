@@ -61,9 +61,30 @@ test('prestart historical September source is NOT backfilled',()=>{
  const f=fixture();f.source.signal.dataDate='2026-09-21';
  assert.equal(decideForward({now:NOW,...f,rows:[]}).kind,'WAIT');
 });
-test('missed first new session fails rather than starting with Oct 13',()=>{
- const f=fixture();f.source.signal.dataDate='2026-10-13';
- assert.equal(decideForward({now:NOW,...f,rows:[]}).code,'MISSING_NYSE_SESSION_REQUIRES_REVIEW');
+function shiftTo(f,d,next,now){
+ f.source.signal.dataDate=d;
+ f.source.signal.generatedAt=d+'T21:30:00.000Z';
+ f.source.signal.signal.date=d;
+ f.source.signal.signal.executionDate=next;
+ f.source.status.generatedAt=f.source.signal.generatedAt;
+ f.source.status.marketDataDate=d;
+ f.source.status.signalDate=d;
+ f.source.signalBytes=JSON.stringify(f.source.signal);
+ f.source.statusBytes=JSON.stringify(f.source.status);
+ f.gold.retrievedAt=now;
+ f.gold.bars.at(-1).date=d;
+}
+test('missed initial October 12 session may start a NEW labelled segment, no retrospective fill',()=>{
+ const f=fixture(),now='2026-10-14T03:37:00.000Z';
+ shiftTo(f,'2026-10-13','2026-10-14',now);
+ const r=decideForward({now,...f,rows:[]});
+ assert.equal(r.kind,'APPEND');
+ assert.equal(r.record.continuity.kind,'UNOBSERVED_GAP');
+ assert.equal(r.record.continuity.expectedDate,'2026-10-12');
+ assert.equal(r.record.execution.estimatedManualOrderLegs,null);
+ assert.equal(r.record.execution.manualLegEstimateReliable,false);
+ assert.equal(r.record.brokerOrderAllowed,false);
+ validateRows([r.record]);
 });
 test('retry of an exact already persisted session is idempotent',()=>{
  const f=fixture(),first=decideForward({now:NOW,...f,rows:[]});
@@ -75,10 +96,29 @@ test('upstream same-day revision after append halts, preserving original row',()
  f.source.statusBytes+=' ';
  assert.equal(decideForward({now:NOW,...f,rows:[first.record]}).code,'ORIGINAL_SOURCE_REVISED');
 });
-test('stray gap between consecutive NYSE sessions rejected before append',()=>{
+test('later missed NYSE session starts explicit noncontiguous segment with no implied returns',()=>{
  const f=fixture(),first=decideForward({now:NOW,...f,rows:[]});
- f.source.signal.dataDate='2026-10-14';
- assert.equal(decideForward({now:NOW,...f,rows:[first.record]}).code,'MISSING_NYSE_SESSION_REQUIRES_REVIEW');
+ const now='2026-10-15T03:37:00.000Z';
+ shiftTo(f,'2026-10-14','2026-10-15',now);
+ f.source.signal.signal.previousTarget=0.5;
+ f.source.signalBytes=JSON.stringify(f.source.signal);
+ const r=decideForward({now,...f,rows:[first.record]});
+ assert.equal(r.kind,'APPEND');
+ assert.equal(r.record.continuity.kind,'UNOBSERVED_GAP');
+ assert.equal(r.record.continuity.expectedDate,'2026-10-13');
+ assert.equal(r.record.execution.actionDay,null);
+ assert.equal(r.record.execution.estimatedManualOrderLegs,null);
+ assert.doesNotMatch(JSON.stringify(r.record),/"equity"|"portfolioReturn"/);
+ validateRows([first.record,r.record]);
+});
+test('missing gap annotation and forged contiguous gap record fail immutability',()=>{
+ const f=fixture(),first=decideForward({now:NOW,...f,rows:[]});
+ const now='2026-10-15T03:37:00.000Z';
+ shiftTo(f,'2026-10-14','2026-10-15',now);
+ const r=decideForward({now,...f,rows:[first.record]});
+ assert.equal(r.kind,'APPEND');
+ assert.throws(()=>validateRows([first.record,{...r.record,continuity:undefined}]),/UNATTESTED_FORWARD_GAP/);
+ assert.throws(()=>validateRows([first.record,{...r.record,continuity:{...r.record.continuity,expectedDate:'2026-10-12'}}]),/UNATTESTED_FORWARD_GAP/);
 });
 test('upstream VS13 previous target mismatch blocks new session',()=>{
  const f=fixture(),first=decideForward({now:NOW,...f,rows:[]});
