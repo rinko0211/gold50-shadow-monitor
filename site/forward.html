@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0d10">
+<title>Gold50 Long Forward | 手動売買研究</title>
+<style>
+:root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b0d10;color:#f1f3f5}
+body{margin:0}main{max-width:750px;margin:auto;padding:22px 16px 64px}h1{font-size:24px;margin:8px 0 4px}p{color:#b1b8c1;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:#171b20;border:1px solid #343a45;border-radius:16px;padding:18px;margin:12px 0}
+.label{color:#97a0ae;font-size:12px;letter-spacing:.2px}.num{font-size:23px;font-weight:700;margin-top:8px}
+a{color:#d8e5fb}.warning{color:#f5c489}.good{color:#bce5c7}#diagnostics{white-space:pre-wrap;overflow-wrap:anywhere}
+small{color:#aab2bf}button{border:1px solid #3f4856;color:#e8edf4;background:#202733;padding:9px 12px;border-radius:9px}
+@media(max-width:480px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body><main>
+<a href="./index.html">← Gold50 Phase C（完了記録）</a>
+<h1>Gold50 長期Forward研究</h1>
+<p>2026年10月12日以降に開始する、<strong>凍結済みGold50ルール1戦略</strong>の前向き観測です。売買シグナルの研究・表示のみで、実際の注文は本人が証券会社で手動操作します。</p>
+<div class="grid"><div class="card"><div class="label">研究ステータス</div><div class="num" id="state">読込中</div></div><div class="card"><div class="label">記録済みNYSEセッション</div><div class="num" id="count">—</div></div>
+<div class="card"><div class="label">最新の観測日</div><div class="num" id="last">—</div></div><div class="card"><div class="label">次の観測対象日</div><div class="num" id="next">—</div></div></div>
+<div class="card"><div class="label">研究上の目標配分</div><div class="num" id="allocation">観測待ち</div>
+<p><small>配分式：TQQQ = VS13目標値、GLD = (1−VS13)/2、現金 = (1−VS13)/2。実行注文ではありません。</small></p></div>
+<div class="card"><div class="label">データ検証・障害情報</div><p id="diagnostics">取得中</p>
+<small>自動売買：無効／年間取引回数：Forward継続後に別途評価／収益率：まだ検証済みではありません</small></div>
+<button id="refresh">最新の保存状態を再読込</button>
+<p><small>本画面はリポジトリに追記された公開研究状態を閲覧するだけです。データが取得できなければ古い値を現在の売買判断として提示しません。Phase CのC10/10と長期Forwardは別台帳です。</small></p>
+<script>
+const root='https://raw.githubusercontent.com/rinko0211/gold50-shadow-monitor/main/forward/status.json';
+function field(id,value){document.getElementById(id).textContent=value}
+async function refresh(){
+ field('state','検証中');field('allocation','取得待ち');field('diagnostics','読込中');
+ try{
+  const r=await fetch(root+'?v='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('HTTP '+r.status);
+  const s=await r.json();
+  if(s?.brokerOrderAllowed!==false||s?.manualUserOrdersOnly!==true||
+    s?.authority!=='NONE_SHADOW_ONLY'||s?.mode!=='SHADOW_RESEARCH')
+    throw Error('取引権限または研究モードに異常があります');
+  field('state',s.state==='ACCUMULATING'?'Forward観測中':
+   s.state==='WAITING_FIRST_VALID_SESSION'?'初回営業日待ち':'データ確認が必要');
+  field('count',String(s.validObservations??'不明'));
+  field('last',s.lastRecordedSession??'未開始');
+  field('next',s.nextExpectedSession??'確認中');
+  const a=s.lastAllocation;
+  field('allocation',a?['TQQQ','GLD','CASH'].map(k=>k+': '+(a[k]*100).toFixed(1)+'%').join(' ／ '):'初回観測待ち');
+  field('diagnostics',s.reasonCode?'停止理由：'+s.reasonCode:
+   '検証済みの新しい観測がある場合のみ記録します。最終取得状態：'+(s.attempt??'未実行'));
+ }catch(e){
+  for(const id of ['count','last','next','allocation'])field(id,'—');
+  field('state','検証できません');
+  field('diagnostics','研究状態の取得エラー：'+String(e.message));
+ }
+}
+document.getElementById('refresh').addEventListener('click',refresh);
+refresh();
+</script>
+</main></body></html>
