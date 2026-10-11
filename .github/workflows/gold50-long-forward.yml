@@ -1,0 +1,75 @@
+name: Gold50 Prospective Forward (Research Only)
+
+on:
+  schedule:
+    - cron: '37 3,9,15 * * 2-6'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/long-forward.mjs'
+      - 'tests/long-forward.test.mjs'
+      - 'forward/status.json'
+      - 'forward/ledger.jsonl'
+      - '.github/workflows/gold50-long-forward.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gold50-prospective-forward-main
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout exact main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Node.js runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Regression tests
+        run: npm test
+      - name: Assert Phase C remains archived
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          const s=JSON.parse(readFileSync('phase-c/status.json','utf8'));
+          if(s.counter!=='C10/10'||s.phaseCState!=='COMPLETE_STOP_GATE'||s.brokerOrderAllowed!==false)
+            throw Error('PHASE_C_ARCHIVE_TAMPER');
+          NODE
+      - name: Capture read-only prospective Gold50 session
+        id: forward
+        env:
+          TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
+        run: |
+          set +e
+          node src/long-forward.mjs
+          rc=$?
+          echo "capture_rc=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Persist only forward research files
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- forward/ledger.jsonl forward/status.json
+          if git diff --cached --quiet; then
+            echo "No new observations"
+          else
+            git commit -m "research: append prospective Gold50 observation/status"
+            git push origin HEAD:main
+          fi
+      - name: Preserve failure status and fail workflow
+        if: always() && steps.forward.outputs.capture_rc != '0'
+        run: |
+          echo "::error::Gold50 source validation blocked, no order permitted."
+          exit 1
