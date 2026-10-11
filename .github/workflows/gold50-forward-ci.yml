@@ -1,0 +1,53 @@
+name: Gold50 Prospective Forward Guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'forward/**'
+      - '.github/workflows/gold50-long-forward.yml'
+      - '.github/workflows/gold50-forward-ci.yml'
+      - 'site/**'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/gold50-long-forward.yml'
+      - '.github/workflows/gold50-forward-ci.yml'
+      - 'site/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  research-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Test frozen Phase C plus new Forward
+        run: npm test
+      - name: Fail on tampered Phase C or unexpected Forward activation
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          const archive=JSON.parse(readFileSync('phase-c/status.json','utf8'));
+          const f=JSON.parse(readFileSync('forward/status.json','utf8'));
+          if(archive.counter!=='C10/10'||archive.phaseCState!=='COMPLETE_STOP_GATE')
+            throw Error('PHASE_C_ARCHIVE_DRIFT');
+          if(f.startDate!=='2026-10-12'||f.brokerOrderAllowed!==false||
+             f.manualUserOrdersOnly!==true||f.validObservations!==0||
+             f.lastRecordedSession!==null)
+            throw Error('UNAUTHORIZED_FORWARD_BACKFILL_OR_BROKER_AUTHORITY');
+          const ledger=readFileSync('forward/ledger.jsonl','utf8').trim();
+          if(ledger!=='')throw Error('NON_PROSPECTIVE_BOOTSTRAP_LEDGER');
+          NODE
