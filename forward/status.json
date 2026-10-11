@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "baseline": "gold50-prospective-forward-v1-20261012",
+  "startDate": "2026-10-12",
+  "state": "WAITING_FIRST_VALID_SESSION",
+  "validObservations": 0,
+  "lastRecordedSession": null,
+  "lastAllocation": null,
+  "nextExpectedSession": "2026-10-12",
+  "attempt": "NOT_STARTED",
+  "reasonCode": null,
+  "evaluatedAt": "2026-10-11T00:00:00.000Z",
+  "performanceCertification": "NOT_AVAILABLE_SIGNAL_TRACK_ONLY",
+  "mode": "SHADOW_RESEARCH",
+  "authority": "NONE_SHADOW_ONLY",
+  "brokerOrderAllowed": false,
+  "manualUserOrdersOnly": true,
+  "rawTiingoOhlcPersisted": false
+}
