@@ -45,9 +45,21 @@ jobs:
           if(archive.counter!=='C10/10'||archive.phaseCState!=='COMPLETE_STOP_GATE')
             throw Error('PHASE_C_ARCHIVE_DRIFT');
           if(f.startDate!=='2026-10-12'||f.brokerOrderAllowed!==false||
-             f.manualUserOrdersOnly!==true||f.validObservations!==0||
-             f.lastRecordedSession!==null)
-            throw Error('UNAUTHORIZED_FORWARD_BACKFILL_OR_BROKER_AUTHORITY');
-          const ledger=readFileSync('forward/ledger.jsonl','utf8').trim();
-          if(ledger!=='')throw Error('NON_PROSPECTIVE_BOOTSTRAP_LEDGER');
+             f.manualUserOrdersOnly!==true||f.mode!=='SHADOW_RESEARCH')
+            throw Error('UNAUTHORIZED_FORWARD_OR_BROKER_AUTHORITY');
+          const {validateRows}=await import('./src/long-forward.mjs');
+          const {validateValuations,START}=await import('./src/forward-valuation.mjs');
+          const rows=readFileSync('forward/ledger.jsonl','utf8').trim().split(/\r?\n/).filter(Boolean).map(JSON.parse);
+          validateRows(rows);
+          if(rows.length!==f.validObservations||
+             (rows.at(-1)?.marketDataDate??null)!==f.lastRecordedSession)
+            throw Error('PROSPECTIVE_FORWARD_COUNT_DRIFT');
+          const p=JSON.parse(readFileSync('forward/performance-status.json','utf8'));
+          const performance=readFileSync('forward/performance-ledger.jsonl','utf8').trim().split(/\r?\n/).filter(Boolean).map(JSON.parse);
+          validateValuations(performance);
+          if(p.startDate!==START||p.mode!=='SHADOW_RESEARCH'||
+             p.brokerOrderAllowed!==false||p.rawTiingoOhlcPersisted!==false||
+             p.recordCount!==performance.length||
+             (performance.at(-1)?.marketDataDate??null)!==p.lastMarketDate)
+            throw Error('PERFORMANCE_FORWARD_AUTHORITY_OR_COUNT_DRIFT');
           NODE

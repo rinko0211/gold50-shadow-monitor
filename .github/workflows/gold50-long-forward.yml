@@ -8,8 +8,12 @@ on:
     branches: [main]
     paths:
       - 'src/long-forward.mjs'
+      - 'src/forward-valuation.mjs'
       - 'tests/long-forward.test.mjs'
+      - 'tests/forward-valuation.test.mjs'
       - 'forward/status.json'
+      - 'forward/performance-status.json'
+      - 'forward/performance-ledger.jsonl'
       - 'forward/ledger.jsonl'
       - '.github/workflows/gold50-long-forward.yml'
 
@@ -56,12 +60,23 @@ jobs:
           rc=$?
           echo "capture_rc=$rc" >> "$GITHUB_OUTPUT"
           exit 0
+      - name: Capture prospective Gold50 model valuation (DD research only)
+        id: perf
+        if: steps.forward.outputs.capture_rc == '0'
+        env:
+          TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
+        run: |
+          set +e
+          node src/forward-valuation.mjs
+          rc=$?
+          echo "perf_rc=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Persist only forward research files
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- forward/ledger.jsonl forward/status.json
+          git add -- forward/ledger.jsonl forward/status.json forward/performance-ledger.jsonl forward/performance-status.json
           if git diff --cached --quiet; then
             echo "No new observations"
           else
@@ -72,4 +87,9 @@ jobs:
         if: always() && steps.forward.outputs.capture_rc != '0'
         run: |
           echo "::error::Gold50 source validation blocked, no order permitted."
+          exit 1
+      - name: Preserve valuation fail-closed status and flag missing DD input
+        if: always() && steps.forward.outputs.capture_rc == '0' && steps.perf.outputs.perf_rc != '0'
+        run: |
+          echo "::error::Gold50 indicative valuation blocked; no model DD advanced."
           exit 1

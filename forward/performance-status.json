@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "version": "gold50-valuation-v1",
+  "startDate": "2026-10-14",
+  "state": "WAITING",
+  "recordCount": 0,
+  "lastMarketDate": null,
+  "index": null,
+  "dd": null,
+  "maxDd": null,
+  "segments": 0,
+  "attempt": "WAIT",
+  "reasonCode": "BEFORE_PERFORMANCE_START",
+  "evaluatedAt": "2026-10-14T09:00:00.000Z",
+  "mode": "SHADOW_RESEARCH",
+  "brokerOrderAllowed": false,
+  "rawTiingoOhlcPersisted": false,
+  "performanceCertification": "INDICATIVE_NOT_COMPARABLE"
+}
