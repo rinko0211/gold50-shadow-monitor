@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "baseline": "gold50-prospective-forward-v1-20261012",
   "startDate": "2026-10-12",
-  "state": "ACCUMULATING",
+  "state": "CHECK_DATA",
   "validObservations": 14,
   "lastRecordedSession": "2026-10-29",
   "lastAllocation": {
@@ -11,9 +11,9 @@
     "CASH": 0
   },
   "nextExpectedSession": "2026-10-30",
-  "attempt": "APPEND",
-  "reasonCode": null,
-  "evaluatedAt": "2026-10-30T10:24:15.514Z",
+  "attempt": "BLOCKED",
+  "reasonCode": "UPSTREAM_SIGNAL_STALE",
+  "evaluatedAt": "2026-10-30T20:04:50.064Z",
   "observedSegments": 1,
   "unobservedGapCount": 0,
   "performanceCertification": "NOT_AVAILABLE_SIGNAL_TRACK_ONLY",
