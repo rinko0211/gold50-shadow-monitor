@@ -17,7 +17,10 @@ const SHA256=/^[0-9a-f]{64}$/;
 const validWeight=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1;
 const isoDate=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d+'T12:00:00Z'))&&new Date(d+'T12:00:00Z').toISOString().slice(0,10)===d;
 const before=(d,days)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10)};
-const errorCode=e=>e instanceof SyntaxError?'INVALID_UPSTREAM_JSON':e?.message==='HTTP_UPSTREAM_NON_RETRYABLE'?'UPSTREAM_HTTP_REJECTED':'SOURCE_OR_PROVIDER_UNAVAILABLE';
+const errorCode=e=>e?.code??(e instanceof SyntaxError?'INVALID_UPSTREAM_JSON':'SOURCE_OR_PROVIDER_UNAVAILABLE');
+const sourceError=(code)=>Object.assign(new Error(code),{code});
+const MAX_SOURCE_POLLS=3;
+const SOURCE_POLL_DELAY_MS=30000;
 const retryDelay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const RETRYABLE_HTTP=new Set([408,425,429,500,502,503,504]);
 const makeStatus=(rows,now,attempt,code)=>({
@@ -60,7 +63,7 @@ async function load(path){
  let raw='';try{raw=await readFile(path,'utf8')}catch(e){if(e.code!=='ENOENT')throw e}
  return validateRows(raw.split(/\r?\n/).filter(Boolean).map(s=>JSON.parse(s)));
 }
-async function get(fetcher,url,headers={}){
+async function get(fetcher,url,headers={},stage='UPSTREAM'){
  // Retry only transient transport/provider failures; never accept stale or invalid data.
  // A failed request must still block the Forward observation after bounded attempts.
  for(let attempt=0;attempt<3;attempt++){
@@ -68,14 +71,14 @@ async function get(fetcher,url,headers={}){
    const r=await fetcher(url,{method:'GET',redirect:'error',cache:'no-store',
     headers:{'User-Agent':'Gold50-Research-Forward/1',...headers}});
    if(!r||r.ok!==true||r.status!==200){
-    if(r&& !RETRYABLE_HTTP.has(r.status))throw Error('HTTP_UPSTREAM_NON_RETRYABLE');
-    throw Error('HTTP_UPSTREAM_RETRYABLE');
+    if(r&& !RETRYABLE_HTTP.has(r.status))throw sourceError(stage+'_HTTP_'+r.status);
+    throw sourceError(stage+'_TRANSIENT_HTTP_'+(r?.status??'UNKNOWN'));
    }
    const body=await r.text();
-   if(!body||body.length>1_500_000)throw Error('BODY_INVALID');
+   if(!body||body.length>1_500_000)throw sourceError(stage+'_INVALID_BODY');
    return body;
   }catch(e){
-   if(e?.message==='HTTP_UPSTREAM_NON_RETRYABLE'||e?.message==='BODY_INVALID'||attempt===2)throw e;
+   if((e?.code&& !e.code.includes('_TRANSIENT_HTTP_'))||attempt===2)throw e?.code?e:sourceError(stage+'_NETWORK_ERROR');
    await retryDelay(1000*(attempt+1));
   }
  }
@@ -83,13 +86,13 @@ async function get(fetcher,url,headers={}){
 }
 /** GitHub ref is read once; Signal/Status are both read from that one immutable commit. */
 export async function pinnedSource(fetcher=globalThis.fetch){
- const root=JSON.parse(await get(fetcher,REF_URL));
+ const root=JSON.parse(await get(fetcher,REF_URL,{},'GITHUB_REF'));
  const sha=root?.object?.sha;
  if(root?.ref!=='refs/heads/ops-state'||root.object?.type!=='commit'||!SHA40.test(sha))
   throw Error('UNTRUSTED_OPS_STATE_REF');
  const base=RAW+sha+'/github-pages/public/data/';
  const [signalBytes,statusBytes]=await Promise.all([
-  get(fetcher,base+'signal.json'),get(fetcher,base+'status.json')
+  get(fetcher,base+'signal.json',{},'GITHUB_SIGNAL'),get(fetcher,base+'status.json',{},'GITHUB_STATUS')
  ]);
  return{sha,signalBytes,statusBytes,signal:JSON.parse(signalBytes),status:JSON.parse(statusBytes)};
 }
@@ -140,6 +143,20 @@ export function decideForward({now,source,gold,rows}){
   brokerOrderAllowed:false,rawTiingoOhlcPersisted:false
  }};
 }
+// Wait briefly for upstream to publish a completed NYSE session, but never fabricate a date.
+export async function waitForFreshSource({fetcher=globalThis.fetch,now=new Date().toISOString(),lastSession=null,
+ sleep=retryDelay,polls=MAX_SOURCE_POLLS,delayMs=SOURCE_POLL_DELAY_MS}={}){
+ let source;
+ for(let i=0;i<polls;i++){
+  source=await pinnedSource(fetcher);
+  const date=source.signal?.dataDate;
+  if(!isoDate(date))throw sourceError('GITHUB_SIGNAL_INVALID_DATE');
+  const stale=lastSession&&date<=lastSession&&completedNyseSessionsSince(source.signal.generatedAt,now)>0;
+  if(!stale)return source;
+  if(i<polls-1)await sleep(delayMs);
+ }
+ throw sourceError('GITHUB_SIGNAL_NOT_UPDATED_AFTER_WAIT');
+}
 export async function runLongForward({
  now=new Date().toISOString(),token=process.env.TIINGO_API_TOKEN,
  rowsPath=resolve('forward/ledger.jsonl'),statusPath=resolve('forward/status.json'),
@@ -148,7 +165,7 @@ export async function runLongForward({
  const rows=await load(rowsPath);
  let d;
  try{
-  const source=await pinnedSource(fetcher);
+  const source=await waitForFreshSource({fetcher,now,lastSession:rows.at(-1)?.marketDataDate});
   if(source.signal.dataDate<START||source.signal.dataDate===rows.at(-1)?.marketDataDate){
    d=decideForward({now,source,gold:null,rows});
   }else if(!token){
@@ -156,7 +173,7 @@ export async function runLongForward({
   }else{
    const url=GLD+'?startDate='+before(source.signal.dataDate,14)+
     '&endDate='+source.signal.dataDate;
-   const bytes=await get(fetcher,url,{Authorization:'Token '+token,Accept:'application/json'});
+   const bytes=await get(fetcher,url,{Authorization:'Token '+token,Accept:'application/json'},'TIINGO_GLD');
    const gold=tiingoBarsFromResponse(JSON.parse(bytes),now);
    gold.dataSha256=sha256(bytes);
    d=decideForward({now,source,gold,rows});
