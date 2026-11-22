@@ -78,7 +78,8 @@ async function get(fetcher,url,headers={},stage='UPSTREAM'){
    if(!body||body.length>1_500_000)throw sourceError(stage+'_INVALID_BODY');
    return body;
   }catch(e){
-   if((e?.code&& !e.code.includes('_TRANSIENT_HTTP_'))||attempt===2)throw e?.code?e:sourceError(stage+'_NETWORK_ERROR');
+   if(e?.code?.startsWith(stage+'_HTTP_')||e?.code===stage+'_INVALID_BODY')throw e;
+   if(attempt===2)throw sourceError(e?.code?.startsWith(stage+'_TRANSIENT_HTTP_')?e.code:stage+'_NETWORK_ERROR');
    await retryDelay(1000*(attempt+1));
   }
  }
