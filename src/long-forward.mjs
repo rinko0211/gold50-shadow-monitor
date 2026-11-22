@@ -17,7 +17,9 @@ const SHA256=/^[0-9a-f]{64}$/;
 const validWeight=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=1;
 const isoDate=d=>typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!Number.isNaN(Date.parse(d+'T12:00:00Z'))&&new Date(d+'T12:00:00Z').toISOString().slice(0,10)===d;
 const before=(d,days)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()-days);return x.toISOString().slice(0,10)};
-const errorCode=e=>e instanceof SyntaxError?'INVALID_UPSTREAM_JSON':'SOURCE_OR_PROVIDER_UNAVAILABLE';
+const errorCode=e=>e instanceof SyntaxError?'INVALID_UPSTREAM_JSON':e?.message==='HTTP_UPSTREAM_NON_RETRYABLE'?'UPSTREAM_HTTP_REJECTED':'SOURCE_OR_PROVIDER_UNAVAILABLE';
+const retryDelay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const RETRYABLE_HTTP=new Set([408,425,429,500,502,503,504]);
 const makeStatus=(rows,now,attempt,code)=>({
  schemaVersion:1,baseline:BASELINE,startDate:START,
  state:attempt==='BLOCKED'?'CHECK_DATA':rows.length?'ACCUMULATING':'WAITING_FIRST_VALID_SESSION',
@@ -59,12 +61,25 @@ async function load(path){
  return validateRows(raw.split(/\r?\n/).filter(Boolean).map(s=>JSON.parse(s)));
 }
 async function get(fetcher,url,headers={}){
- const r=await fetcher(url,{method:'GET',redirect:'error',cache:'no-store',
-  headers:{'User-Agent':'Gold50-Research-Forward/1',...headers}});
- if(!r||r.status!==200||r.ok!==true)throw Error('HTTP_UPSTREAM_FAILED');
- const body=await r.text();
- if(!body||body.length>1_500_000)throw Error('BODY_INVALID');
- return body;
+ // Retry only transient transport/provider failures; never accept stale or invalid data.
+ // A failed request must still block the Forward observation after bounded attempts.
+ for(let attempt=0;attempt<3;attempt++){
+  try{
+   const r=await fetcher(url,{method:'GET',redirect:'error',cache:'no-store',
+    headers:{'User-Agent':'Gold50-Research-Forward/1',...headers}});
+   if(!r||r.ok!==true||r.status!==200){
+    if(r&& !RETRYABLE_HTTP.has(r.status))throw Error('HTTP_UPSTREAM_NON_RETRYABLE');
+    throw Error('HTTP_UPSTREAM_RETRYABLE');
+   }
+   const body=await r.text();
+   if(!body||body.length>1_500_000)throw Error('BODY_INVALID');
+   return body;
+  }catch(e){
+   if(e?.message==='HTTP_UPSTREAM_NON_RETRYABLE'||e?.message==='BODY_INVALID'||attempt===2)throw e;
+   await retryDelay(1000*(attempt+1));
+  }
+ }
+ throw Error('HTTP_UPSTREAM_RETRY_EXHAUSTED');
 }
 /** GitHub ref is read once; Signal/Status are both read from that one immutable commit. */
 export async function pinnedSource(fetcher=globalThis.fetch){
