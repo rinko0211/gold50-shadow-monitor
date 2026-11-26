@@ -11,9 +11,9 @@
     "CASH": 0.5
   },
   "nextExpectedSession": "2026-11-27",
-  "attempt": "APPEND",
-  "reasonCode": null,
-  "evaluatedAt": "2026-11-26T13:03:21.764Z",
+  "attempt": "DUPLICATE",
+  "reasonCode": "EXACT_SESSION_ALREADY_RECORDED",
+  "evaluatedAt": "2026-11-26T23:58:24.849Z",
   "observedSegments": 3,
   "unobservedGapCount": 2,
   "performanceCertification": "NOT_AVAILABLE_SIGNAL_TRACK_ONLY",
